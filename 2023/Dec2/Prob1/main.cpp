@@ -111,20 +111,20 @@ Game* parseLine(std::string line)
 		int multVal = (i > (spcPos + 1)) ? 10 : 0;
 		game->id = game->id * (multVal) + (line[i] - 0x30);
 	}
-	game->disp();
+	//game->disp();
 	return game;
 }
 
 std::vector<Set>* parseSets(std::string sets)
 {
 	std::vector<Set>* setVec = new std::vector<Set>;
-	std::cout << sets << std::endl << std::endl;
+	//std::cout << sets << std::endl << std::endl;
 	size_t pos = sets.find(';');
 	while (pos != std::string::npos)
 	{
 		setVec->push_back(parseSet(sets.substr(0, pos)));
 		sets = sets.substr(pos + 1);
-		std::cout << sets << std::endl << std::endl;
+		//std::cout << sets << std::endl << std::endl;
 		pos = sets.find(';');
 	}
 	setVec->push_back(parseSet(sets));
@@ -133,7 +133,7 @@ std::vector<Set>* parseSets(std::string sets)
 
 Set parseSet(std::string set)
 {
-	std::cout << set << std::endl;
+	//std::cout << set << std::endl;
 	//no more than 2 commas
 	Set retSet;
 	std::size_t pos = set.find(',');
@@ -141,7 +141,7 @@ Set parseSet(std::string set)
 	{
 		parseColor(retSet, set, pos);
 		set = set.substr(pos + 1);
-		std::cout << set << std::endl;
+		//std::cout << set << std::endl;
 		pos = set.find(',');
 	}
 	parseColor(retSet, set, pos);
