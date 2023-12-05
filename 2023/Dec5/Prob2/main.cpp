@@ -8,11 +8,16 @@
 #include <vector>
 #include <cstdint>
 #include <cmath>
+#include <chrono>
 
 struct Seed
 {
 	uint64_t startVal;
 	uint64_t rangeLength;
+	bool inRange(uint64_t seed)
+	{
+		return (seed >= startVal && seed < (startVal + rangeLength));
+	}
 };
 
 struct Map
@@ -39,12 +44,27 @@ struct Map
 		}
 		return valid;
 	}
+	bool getSourceVal(uint64_t destVal, uint64_t* sourceVal)
+	{
+		bool valid = false;
+		if (destVal >= destStart && destVal < (destStart + rangeLength))
+		{
+			valid = true;
+			uint64_t offset = destVal - destStart;
+			*sourceVal = sourceStart + offset;
+			//std::cout << "DESTVAL = " << *destVal << std::endl;
+			//std::cout << "SourceVal = " << sourceVal << ", " << std::endl;
+			//disp();
+			//std::cout << std::endl;
+		}
+		return valid;
+	}
 };
 
 uint64_t parseInt(std::string parseVal);
 std::vector<std::string>* splitString(std::string string, char delimeter);
 Map parseMap(std::vector<std::string>* line);
-std::vector<uint64_t>* mapSeedToOutput(uint64_t seed);
+std::vector<uint64_t>* mapOutputToSeed(uint64_t location);
 
 std::vector<std::vector<Map>*> maps;
 
@@ -105,31 +125,39 @@ int main(int argc, char* argv[])
 	//loop through lines. separating by set.
 	std::vector<std::vector<Map>*>::iterator i;
 	std::vector<Map>::iterator j;
-	std::vector<Seed>::iterator seed;
+	std::vector<Seed>::iterator itr;//for looping through seeds.
 
-	std::vector<uint64_t>* locations;
-	uint64_t minLocation = 0xFFFFFFFFFFFFFFFF;
+	std::vector<uint64_t>* potSeeds;
+	std::vector<uint64_t>::iterator potSeedItr;
 
-	for(seed = seeds.begin(); seed < seeds.end(); seed++)
+	uint64_t minLocation = 0;
+	bool minLocFound = false;
+
+	while(!minLocFound)
 	{
-		for(uint64_t idx = (*seed).startVal; idx < ((*seed).startVal + (*seed).rangeLength); idx++)
+		//time this.
+		//auto startTime = std::chrono::high_resolution_clock::now();
+		potSeeds = mapOutputToSeed(minLocation);
+		//auto endTime = std::chrono::high_resolution_clock::now();
+		//auto execTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime);
+		//std::cout << "ExecTime = " << (int)execTime.count() << std::endl;
+		//loop through potential seeds, and compare each to all seeds.
+		for(potSeedItr = potSeeds->begin(); potSeedItr < potSeeds->end(); potSeedItr++)
 		{
-			//std::cout << "SEED = " << *seed << std::endl << std::endl << std::endl;
-			locations = mapSeedToOutput(idx);
-			std::vector<uint64_t>::iterator locItr;
-			for(locItr = locations->begin(); locItr < locations->end(); locItr++)
+			//loop through seeds to see if the seed is valid
+			for(itr = seeds.begin(); !minLocFound && itr < seeds.end(); itr++)
 			{
-				//std::cout << "LOCATION = " << *locItr << std::endl;
-				if((*locItr) < minLocation)
+				if((*itr).inRange(*potSeedItr))
 				{
-					minLocation = *locItr;
+					minLocFound = true;
 				}
 			}
-			delete locations;
 		}
+		delete potSeeds;
+		minLocation++;
 	}
 
-	std::cout << "Min Location = " << minLocation << std::endl;
+	std::cout << "Min Location = " << minLocation - 1 << std::endl;
 
 	return 0;
 }
@@ -196,18 +224,18 @@ Map parseMap(std::vector<std::string>* line)
 
 	return map;
 }
-//I'm forgetting direct maps. TODO if no map is found. push the id.
-std::vector<uint64_t>* mapSeedToOutput(uint64_t seed)
+
+std::vector<uint64_t>* mapOutputToSeed(uint64_t location)
 {
-	std::vector<uint64_t>* locations = new std::vector<uint64_t>;
+	std::vector<uint64_t>* seeds = new std::vector<uint64_t>;
 	std::vector<uint64_t> imOne, imTwo;
-	imOne.push_back(seed);
+	imOne.push_back(location);
 	std::vector<std::vector<Map>*>::iterator i;
 	std::vector<Map>::iterator j;
 	bool buf = false;
 	std::vector<uint64_t>::iterator k;
 
-	for(i = maps.begin(); i < maps.end(); i++)
+	for(i = maps.end() - 1; i >= maps.begin(); i--)
 	{
 		//std::cout << mapNames[i - maps.begin()] << std::endl;
 		//std::cout << "Seed -> soil size = " << (*i)->size() << std::endl;
@@ -226,7 +254,7 @@ std::vector<uint64_t>* mapSeedToOutput(uint64_t seed)
 				//loop through values in imTwo
 				for(k = imTwo.begin(); k < imTwo.end(); k++)
 				{
-					if((*j).getDestVal(*k, location))
+					if((*j).getSourceVal(*k, location))
 					{
 						imOne.push_back(*location);
 					}
@@ -242,7 +270,7 @@ std::vector<uint64_t>* mapSeedToOutput(uint64_t seed)
 					imTwo.clear();
 				for(k = imOne.begin(); k < imOne.end(); k++)
 				{
-					if((*j).getDestVal(*k, location))
+					if((*j).getSourceVal(*k, location))
 					{
 						imTwo.push_back(*location);
 					}
@@ -283,16 +311,17 @@ std::vector<uint64_t>* mapSeedToOutput(uint64_t seed)
 		//loop through values in imTwo
 		for(k = imTwo.begin(); k < imTwo.end(); k++)
 		{
-			locations->push_back(*k);
+			seeds->push_back(*k);
 		}
 	}
 	else
 	{
 		for(k = imOne.begin(); k < imOne.end(); k++)
 		{
-			locations->push_back(*k);
+			seeds->push_back(*k);
 		}
 	}
 
-	return locations;
+	return seeds;
 }
+
