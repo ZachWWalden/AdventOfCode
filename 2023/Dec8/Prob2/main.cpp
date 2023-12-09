@@ -128,12 +128,18 @@ int main(int argc, char* argv[])
 	}
 
 	uint64_t steps = 1;
+	bool lcmPossible = true;
+
 	for(int i = 0; i < numPaths; i++)
 	{
+		if(pathLengths[i] % moveSeq.length() != 0)
+		{
+			lcmPossible = false;
+		}
 		steps = lcmInt(steps, pathLengths[i]);
 	}
 
-	std::cout << "Steps = " <<  steps << std::endl;
+	std::cout << lcmPossible << ", Steps = " <<  steps << std::endl;
 
 	return 0;
 }
