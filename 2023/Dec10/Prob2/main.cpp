@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cmath>
 
 struct vec2I
 {
@@ -71,8 +72,6 @@ std::vector<std::string> lines;
 
 int charToInt(char chr);
 vec2I moveToNextChar(vec2I prevPos, vec2I pos, char chr);
-bool isEnc(bool** isLoop, vec2I point);
-bool checkDir(bool** isLoop, vec2I point, vec2I delta);
 
 template <typename T>
 T** allocDoublePointer(int y, int x, T initial_value)
@@ -123,6 +122,7 @@ int main(int argc, char* argv[])
 	}
 
 	std::vector<vec2I> loopCoords;
+	std::vector<vec2I> loopVertices;
 
 	vec2I sPos(0,0);
 	bool done = false;
@@ -177,6 +177,7 @@ int main(int argc, char* argv[])
 */
 	pos.x = pos.x + exitMove.x;
 	pos.y = pos.y + exitMove.y;
+	loopCoords.push_back(pos);
 	curChar = lines[pos.y][pos.x];
 
 	done = false;
@@ -202,12 +203,44 @@ int main(int argc, char* argv[])
 			curChar = lines[pos.y][pos.x];
 			loopLength++;
 			loopCoords.push_back(pos);
+			if (curChar == 'L' || curChar == 'J' || curChar == '7' || curChar == 'F')
+			{
+				loopVertices.push_back(pos);
+			}
 		}
 	}
+	//I need to replace S;
+	//std::cout << "LAST EXIT MOVE: ";
+	vec2I lastExitMove = pos.difference(prevPos);
+	//lastExitMove.disp();
+	//std::cout << "EXIT MOVE: ";
+	//exitMove.disp();
+	//Options: |, -, F, J, L , 7;
+	//loop through chars, find an entry move equivalent to lastExitMove;
+	// if that Chars exit move in the other idx is == to exitMove, replace S with that char;
+	std::string chars = "|-LJ7F";
+	bool sDone = false;
+	for(int i = 0; i < chars.length(); i++)
+	{
+		int outerIdx = charToInt(chars[i]);
+		for(int j = 0; j < 2; j++)
+		{
+			if ((validateEntry[outerIdx][j]).isEqual(lastExitMove))
+			{
+				if ((validateExit[outerIdx][j]).isEqual(exitMove))
+				{
+					sDone = true;
+					//replace s with chars[i]
+					//std::cout << "S = " << chars[i] << std::endl;
+					lines[sPos.y][sPos.x] = chars[i];
+				}
+			}
+		}
+	}
+	//lines[sPos.y][sPos.x] = 'L';
 
 	bool** isLoop = allocDoublePointer<bool>(lines.size(), lines[0].length(), false);
 	bool** isEnclosed = allocDoublePointer<bool>(lines.size(), lines[0].length(), true);
-	bool** counted = allocDoublePointer<bool>(lines.size(), lines[0].length(), false);
 
 	vec2I max(0, 0), min(lines[0].length(), lines.size());
 	for(vec2I point : loopCoords)
@@ -233,11 +266,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	//loop over lines
-	for(auto line : lines)
-	{
-
-	}
 
 	if (min.x == 0)
 	{
@@ -256,7 +284,6 @@ int main(int argc, char* argv[])
 		max.y--;
 	}
 
-	std::vector<vec2I> potPoints;
 	for(int y = 0; y < lines.size(); y++)
 	{
 		for(int x = 0; x < lines[y].length(); x++)
@@ -265,31 +292,42 @@ int main(int argc, char* argv[])
 			{
 				isEnclosed[y][x] = false;
 			}
-			else if (!(isLoop[y][x]))
+
+		}
+	}
+
+	//dispDoublePointer(isLoop, lines.size(), lines[0].length());
+	//dispDoublePointer(isEnclosed, lines.size(), lines[0].length());
+
+	int sum = 0;
+	for(int i = 0; i < lines.size(); i++)
+	{
+		//loop through the points to the left of this point.
+		bool isEnc = false;
+		for (int j = 0; j < lines[i].length(); j++)
+		{
+			if((lines[i][j] == '|' || lines[i][j] == 'L' || lines[i][j] == 'J') && isLoop[i][j])
 			{
-				potPoints.push_back(vec2I(x,y));
+				isEnc = !isEnc;
+			}
+			else if (!isLoop[i][j])
+			{
+				if(isEnc)
+					sum++;
 			}
 		}
 	}
 
-	dispDoublePointer(isLoop, lines.size(), lines[0].length());
-	dispDoublePointer(isEnclosed, lines.size(), lines[0].length());
-
-	int sum = 0;
-	for(vec2I point : potPoints)
+	int shoelaceSum = 0;
+	for(auto i = loopCoords.rbegin(); i < loopCoords.rend() - 1; i++)
 	{
-		if(isEnc(isLoop, point))
-		{
-
-			//point.disp();
-			counted[point.y][point.x] = true;
-			sum++;
-			isLoop[point.y][point.x] = true;
-		}
+		shoelaceSum += i->x * (i + 1)->y - i->y * (i+1)->x;
 	}
+	shoelaceSum += loopCoords.rend()->x * loopCoords.rbegin()->y - loopCoords.rend()->y * loopCoords.rbegin()->x;
+	shoelaceSum = (int) std::ceil(std::abs((float)shoelaceSum)/2.0f - ((float)loopCoords.size())/2.0f + 1);
+
 	//int num = (loopLength & 1) + (loopLength >> 1);
 
-	dispDoublePointer(counted, lines.size(), lines[0].length());
 
 	std::cout << "Num Enclosed = " << sum << std::endl;
 
@@ -357,31 +395,4 @@ void dispDoublePointer(bool** pointer, int y, int x)
 	}
 	std::cout << std::endl;
 }
-bool isEnc(bool** isLoop, vec2I point)
-{
-	return checkDir(isLoop, point, vec2I(-1,-1)) && checkDir(isLoop, point, vec2I(0,-1)) && checkDir(isLoop, point, vec2I(1,-1)) && checkDir(isLoop, point, vec2I(-1,0)) && checkDir(isLoop, point, vec2I(1,0)) && checkDir(isLoop, point, vec2I(-1,1)) && checkDir(isLoop, point, vec2I(0,1)) && checkDir(isLoop, point, vec2I(1,1));
-}
 
-bool checkDir(bool** isLoop, vec2I point, vec2I delta)
-{
-
-	point.add(delta);
-	bool retVal = false;
-	bool done = false;
-	while (!done)
-	{
-		//check isLoop
-		if(isLoop[point.y][point.x])
-		{
-			retVal = true;
-			done = true;
-		}
-		else if (point.x == 0 || point.y == 0 || point.x == (lines[0].length() - 1) || point.y == (lines.size() - 1))
-		{
-			done = true;
-		}
-		point.add(delta);
-	}
-
-	return retVal;
-}
