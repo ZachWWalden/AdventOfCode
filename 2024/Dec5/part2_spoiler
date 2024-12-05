@@ -1,0 +1,58 @@
+correct list: 75, 47, 61, 53, 29
+
+num:	y freq:		x freq:
+75		0			4
+47		1			3
+61		2			2
+53		3			1
+29		4			0
+
+correct list: 97, 61, 53, 29, 13
+
+num:	y freq:		x freq:
+97		0			4
+61		1			3
+53		2			2
+29		3			1
+13		4			0
+
+correct list: 75, 29, 13
+
+num:	y freq:		x freq:
+75		0			2
+29		1			1
+13		2			0
+
+correct list: 97,75,47,61,53
+
+num:	y freq:		x freq:
+97		0			4
+75		1			3
+47		2			2
+61		3			1
+53		4			0
+
+correct list: 61,29,13
+
+num:	y freq:		x freq:
+61		0			2
+29		1			1
+13		2			0
+
+correct list: 97, 75, 47. 29, 13
+
+num:	y freq:		x freq:
+97		0			4
+75		1			3
+47		2			2
+29		3			1
+13		4			0
+
+hmm interesting... Thhis cannot be a coincidence. or it is a cheap trick.
+A numbers frequency in the Y column of applicable rules DIRECTLY corresponds to the correct order.
+A numbers frequency in the X column of applicable rules DIRECTLY corresponds to the reverse correct order.
+To provide a sanity check:
+	If the numbers with Y or X column frequencies > 0 happened to be less than (int)list.size() - 1
+	there would be multiple correct answers.
+Solution:
+	compute the Y column frequency values. That number IS it's index in the correctly ordered list
