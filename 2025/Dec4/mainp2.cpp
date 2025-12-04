@@ -80,33 +80,32 @@ int main(int argc, char* argv[])
 bool checkRoll(std::vector<std::string> *map, int x, int y)
 {
 	int num_neighbors = 0;
-	std::vector<std::string> vec = (*map);
-	if(vec[y][x] != '@')
+	if((*map)[y][x] != '@')
 		return false;
 	//check all 8 directions
 	//-1, -1
-	if(x > 0 && y > 0 && vec[y -1][x -1] == '@')
+	if(x > 0 && y > 0 && (*map)[y -1][x -1] == '@')
 		num_neighbors++;
 	//0, -1
-	if(y > 0 && vec[y - 1][x] == '@')
+	if(y > 0 && (*map)[y - 1][x] == '@')
 		num_neighbors++;
 	//1, -1
-	if(x < LINE_LEN - 1 && y > 0 && vec[y -1][x+1] == '@')
+	if(x < LINE_LEN - 1 && y > 0 && (*map)[y -1][x+1] == '@')
 		num_neighbors++;
 	//-1, 0
-	if(x > 0 && vec[y][x - 1] == '@')
+	if(x > 0 && (*map)[y][x - 1] == '@')
 		num_neighbors++;
 	//1, 0
-	if(x < LINE_LEN - 1 && vec[y][x + 1] == '@')
+	if(x < LINE_LEN - 1 && (*map)[y][x + 1] == '@')
 		num_neighbors++;
 	//-1, 1
-	if(x > 0 && y < NUM_LINES - 1 && vec[y + 1][x - 1] == '@')
+	if(x > 0 && y < NUM_LINES - 1 && (*map)[y + 1][x - 1] == '@')
 		num_neighbors++;
 	//0, 1
-	if(y < NUM_LINES - 1 && vec[y + 1][x] == '@')
+	if(y < NUM_LINES - 1 && (*map)[y + 1][x] == '@')
 		num_neighbors++;
 	//1, 1
-	if(x < LINE_LEN - 1 && y < NUM_LINES - 1 && vec[y + 1][x + 1] == '@')
+	if(x < LINE_LEN - 1 && y < NUM_LINES - 1 && (*map)[y + 1][x + 1] == '@')
 		num_neighbors++;
 
 	return (num_neighbors < 4) ? true : false;
